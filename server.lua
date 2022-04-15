@@ -25,6 +25,7 @@ local flagLocations = { -- Pairs of team flag locations
 }
 local maxPoints = 3 -- How many points to win
 local captureWithFlagGone = false -- Should the player be able to capture without their flag being at the base?
+local canSwitchToUnbalanced = true -- Can players use /switchteams even if it will make the teams unbalanced?
 
 --[[ END CONFIG ]]
 
@@ -296,6 +297,34 @@ RegisterCommand("bothteams", function(source, args) -- Should be restricted to s
         TriggerClientEvent("chatMessage", source, "^*^8You can now see both team's blips and name tags.")
     else
         TriggerClientEvent("chatMessage", source, "^*^8You can no longer see both team's blips and name tags.")
+    end
+end)
+
+RegisterCommand("switchteams", function (source, args)
+    local myTeam, otherTeam = getPlayerTeams(source)
+    local numTeam1, numTeam2 = 0, 0
+    for _,playerInfo in pairs(gameInfo.PlayerTeams) do
+        if playerInfo.Team == team1 then
+            numTeam1 = numTeam1+1
+        else
+            numTeam2 = numTeam2+1
+        end
+    end
+    if (gameInfo.Teams.Team1.FlagPickup and gameInfo.Teams.Team1.FlagPickup.Player == source) or (gameInfo.Teams.Team2.FlagPickup and gameInfo.Teams.Team2.FlagPickup.Player == source) then
+        TriggerClientEvent("chatMessage", source, "^*^8Unable to switch teams while you're holding a flag.")
+        return
+    end
+    if gameInfo.PlayerTeams[source].LastRespawn and GetGameTimer()-gameInfo.PlayerTeams[source].LastRespawn < 5*60*1000 then
+        TriggerClientEvent("chatMessage", source, ("^*^8Next team switch available in %s seconds"):format((5*60)-math.floor((GetGameTimer()-gameInfo.PlayerTeams[source].LastRespawn)/1000)))
+        return
+    end
+    if canSwitchToUnbalanced or (numTeam1 > numTeam2+2 or numTeam2 > numTeam1+2) then
+        gameInfo.PlayerTeams[source].Team = otherTeam
+        gameInfo.PlayerTeams[source].LastRespawn = GetGameTimer()
+        TriggerClientEvent("DalraeEvent:RespawnPlayer", source)
+        TriggerClientEvent("chatMessage", source, ("^*^3You switched to the %s^3 team"):format(otherTeam.ChatColorPrefix..otherTeam.Name))
+    else
+        TriggerClientEvent("chatMessage", source, ("^*^8Unable to switch to the %s^8 team because it will make the teams unbalanced."):format(otherTeam.ChatColorPrefix..otherTeam.Name))
     end
 end)
 

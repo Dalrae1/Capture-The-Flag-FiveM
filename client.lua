@@ -91,6 +91,28 @@ function getPlayerTeams(player)
     return myTeam, otherTeam
 end
 
+function RespawnPlayer()
+    CreateThread(function()
+        repeat
+            local randomCoord = vector3(myTeam.InitialFlagCoords.x+math.random(-500,500),myTeam.InitialFlagCoords.y+math.random(-500,500), 0.0)
+            RequestCollisionAtCoord(randomCoord.x,randomCoord.y, randomCoord.z)
+            local groundZ
+            repeat
+                _, groundZ = GetGroundZFor_3dCoord_2(randomCoord.x, randomCoord.y, 10000.0, false)
+                Wait(0)
+            until groundZ and groundZ ~= 0.0
+            randomCoord = vector3(randomCoord.x, randomCoord.y, groundZ)
+            SetEntityCoordsNoOffset(PlayerPedId(), randomCoord.x,randomCoord.y, randomCoord.z, false, false, false, true)
+            NetworkResurrectLocalPlayer(randomCoord.xyz, 0.0, true, false) 
+            SetPlayerInvincible(PlayerPedId(), false) 
+            ClearPedBloodDamage(PlayerPedId())
+            Wait(100)
+        until not IsEntityInWater(PlayerPedId())
+    end)
+end
+
+RegisterNetEvent("DalraeEvent:RespawnPlayer", RespawnPlayer)
+
 TriggerServerEvent("DalraeEvent:Ping")
 local numPSA = 0
 RegisterNetEvent("DalraeEvent:PSAAnnouncement", function(message)
@@ -285,21 +307,7 @@ CreateThread(function()
                         StopScreenEffect("DeathFailOut")
                     end)
                     Wait(7000)
-                    repeat
-                        local randomCoord = vector3(myTeam.InitialFlagCoords.x+math.random(-500,500),myTeam.InitialFlagCoords.y+math.random(-500,500), 0.0)
-                        RequestCollisionAtCoord(randomCoord.x,randomCoord.y, randomCoord.z)
-                        local groundZ
-                        repeat
-                            _, groundZ = GetGroundZFor_3dCoord_2(randomCoord.x, randomCoord.y, 10000.0, false)
-                            Wait(0)
-                        until groundZ and groundZ ~= 0.0
-                        randomCoord = vector3(randomCoord.x, randomCoord.y, groundZ)
-                        SetEntityCoordsNoOffset(PlayerPedId(), randomCoord.x,randomCoord.y, randomCoord.z, false, false, false, true)
-                        NetworkResurrectLocalPlayer(randomCoord.xyz, 0.0, true, false) 
-                        SetPlayerInvincible(PlayerPedId(), false) 
-                        ClearPedBloodDamage(PlayerPedId())
-                        Wait(100)
-                    until not IsEntityInWater(PlayerPedId())
+                    RespawnPlayer()
                     
                     deathDeb = false
                 end)
