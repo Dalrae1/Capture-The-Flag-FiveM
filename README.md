@@ -12,6 +12,8 @@ NOTE: Some of the commands should be restricted to staff, including:
 
 ``/bothteams`` (Toggles the ability to see all player's minimap blips)
 
+``/switchteams`` (Switches to the opposite team with a 5 minute cooldown)
+
 
 
 Reference for colors: http://www.kronzky.info/fivemwiki/index.php?title=Text_Colors and https://wiki.rage.mp/index.php?title=Blip::color
